@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import models
 
 from .models import Application
-from .serializers import ApplicationSerializer, MeetingRequestSerializer
+from .serializers import ApplicationSerializer, MeetingRequestSerializer, ContactUsSerializer
 
 
 def send_email(subject, message, recipient, html_message=None, fail_silently=False):
@@ -37,9 +37,9 @@ class ApplicationCreateAPIView(generics.CreateAPIView):
         included_fields = [field for field in serializer.fields.keys() if field not in excluded_fields]
 
         user_data = "\n".join([
-            f"{field.replace('_', ' ').title()}: {getattr(instance, field)}"
-            for field in included_fields
-        ])
+			f"{field.replace('_', ' ').title()}: {getattr(instance, field, '') or ''}"
+			for field in included_fields
+		])
 
         # Email to user (Plain + HTML)
         subject_user = "Thank you for your submission!"
@@ -122,3 +122,29 @@ class RequestMeetingAPIView(APIView):
         send_email(subject_user, text_user, email, html_message=html_user)
 
         return Response({"message": "Meeting request submitted successfully."}, status=200)
+
+class ContactUsAPIView(APIView):
+    def post(self, request):
+        serializer = ContactUsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        subject = serializer.validated_data['subject']
+        description = serializer.validated_data['description']
+        name = serializer.validated_data.get('name') or 'Anonymous'
+        email = serializer.validated_data.get('email') or 'No email provided'
+
+        message = (
+            f"New contact form submission:\n\n"
+            f"Name: {name}\n"
+            f"Email: {email}\n"
+            f"Subject: {subject}\n\n"
+            f"Message:\n{description}"
+        )
+
+        send_email(
+            subject=f"[Contact Form] {subject}",
+            message=message,
+            recipient=settings.DEFAULT_FROM_EMAIL,  # goes to admin
+        )
+
+        return Response({"message": "Your message has been sent successfully!"}, status=200)

@@ -29,3 +29,9 @@ class MeetingRequestSerializer(serializers.Serializer):
         if not Application.objects.filter(models.Q(email=value) | models.Q(office_email=value)).exists():
             raise serializers.ValidationError("No application found with this email.")
         return value
+
+class ContactUsSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100, required=False)
+    email = serializers.EmailField(required=False)
+    subject = serializers.CharField(max_length=200)
+    description = serializers.CharField()
