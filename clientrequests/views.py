@@ -33,7 +33,7 @@ class ApplicationCreateAPIView(generics.CreateAPIView):
         instance = serializer.save(status='RECEIVED')
 
         # Filter fields to include in user summary
-        excluded_fields = {'id', 'created_at', 'updated_at', 'status', 'progress_details'}
+        excluded_fields = {'id', 'created_at', 'updated_at', 'status', 'progress_details', 'meeting_link'}
         included_fields = [field for field in serializer.fields.keys() if field not in excluded_fields]
 
         user_data = "\n".join([
